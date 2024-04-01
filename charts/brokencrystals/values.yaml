@@ -5,3 +5,8 @@ ingress:
 images: 
   main: stable
   client: stable
+repeaterImageTag: ""
+repeaterID: ""
+token: ""
+cluster: ""
+timeout: ""
