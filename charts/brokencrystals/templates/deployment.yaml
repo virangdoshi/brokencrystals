@@ -26,6 +26,7 @@ spec:
             - "nodejs"
             - "proxy"
             - "repeater"
+            - "mailcatcher"
       containers:
         - name: postgres
           image: postgres
@@ -174,7 +175,10 @@ spec:
               scheme: HTTP
             initialDelaySeconds: 120
             periodSeconds: 30
-        
+
+        - name: mailcatcher
+          image: sj26/mailcatcher
+
         {{- if and .Values.repeaterID .Values.token .Values.cluster }}
         - name: repeater
           image: brightsec/cli{{ if ne .Values.repeaterImageTag "" }}:{{ .Values.repeaterImageTag }}{{ else }}:latest{{ end }}
