@@ -73,7 +73,7 @@ spec:
               cpu: 100m
               memory: 50Mi          
           volumeMounts:
-          - name: {{ include "brokencrystals.fullname" . }}-keycloak-postgres
+          - name: {{ include "brokencrystals.fullname" . }}-kc-db
             mountPath: /usr/local/share/postgresql/postgresql.conf.sample
             subPath: postgresql.conf.sample
             readOnly: true
@@ -235,9 +235,9 @@ spec:
       - name: {{ include "brokencrystals.fullname" . }}-postgres
         configMap:
           name: {{ include "brokencrystals.fullname" . }}-postgres
-      - name: {{ include "brokencrystals.fullname" . }}-keycloak-postgres
+      - name: {{ include "brokencrystals.fullname" . }}-kc-db
         configMap:
-          name: {{ include "brokencrystals.fullname" . }}-keycloak-postgres
+          name: {{ include "brokencrystals.fullname" . }}-kc-db
       - name: {{ include "brokencrystals.fullname" . }}-keycloak
         configMap:
           name: {{ include "brokencrystals.fullname" . }}-keycloak
