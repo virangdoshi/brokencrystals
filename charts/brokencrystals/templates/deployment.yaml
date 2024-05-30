@@ -200,8 +200,7 @@ spec:
             - name: CLUSTER
               value: "{{ .Values.cluster }}"
             - name: TIMEOUT
-              value: "{{ .Values.timeout | default "30000" }}"
-        restartPolicy: Always      
+              value: "{{ .Values.timeout | default "30000" }}"      
         {{- end }}
       
         {{- if and .Values.snifferApiKey .Values.snifferProjectID .Values.snifferApiURL }}
