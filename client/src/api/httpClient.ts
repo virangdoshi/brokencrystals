@@ -8,6 +8,7 @@ import {
 } from '../interfaces/User';
 import { Product } from '../interfaces/Product';
 import { OidcClient } from '../interfaces/Auth';
+import { ChatMessage } from '../interfaces/ChatMessage';
 import { ApiUrl } from './ApiUrl';
 import { makeApiRequest } from './makeApiRequest';
 
@@ -329,5 +330,15 @@ export function sendSupportEmailRequest(
   return makeApiRequest({
     url: `${ApiUrl.Email}/sendSupportEmail?name=${name}&to=${to}&subject=${subject}&content=${content}`,
     method: 'get'
+  });
+}
+
+export function queryChat(messages: ChatMessage[]): Promise<string> {
+  return makeApiRequest({
+    url: `${ApiUrl.Chat}/query`,
+    method: 'post',
+    data: messages
+  }).then((res) => {
+    return typeof res === 'string' ? res : '';
   });
 }
