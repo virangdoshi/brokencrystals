@@ -6,11 +6,11 @@ The application contains:
 - React based web client
   - FE - http://localhost:8090
   - BE - http://localhost:3000
-- NodeJS server - the full API documentation is available via swagger or GraphQL
+- NodeJS server that serves the React client and provides both OpenAPI and GraphQL endpoints.
+The full API documentation is available via swagger or GraphQL:
   - Swagger UI - http://localhost:8090/swagger
   - Swagger JSON file - http://localhost:8090/swagger-json
   - GraphiQL UI - http://localhost:8090/graphiql
-- nginx web server that serves the client and acts as a reverse proxy for the server's API requests
 
 > **Note**
 > The GraphQL API does not yet support all of the endpoints the REST API does.
@@ -22,7 +22,7 @@ The application contains:
 npm ci && npm run build
 
 # build client
-npm ci --prefix public && npm run build --prefix public
+npm ci --prefix client && npm run build --prefix client
 
 #build and start dockers with Postgres DB, nginx and server
 docker-compose --file=docker-compose.local.yml up -d
@@ -30,6 +30,40 @@ docker-compose --file=docker-compose.local.yml up -d
 #rebuild dockers
 docker-compose --file=docker-compose.local.yml up -d --build
 ```
+## Running application with helm chart
+Helm command example:
+```bash
+helm upgrade --install --namespace distributor broken          \
+  --set snifferApiURL=https://hotel.playground.neuralegion.com \
+  --set snifferProjectID=ud8v8jwUaG14JiAihMQx1M                \
+  --set snifferApiKey=6g0daym.nexp.spkuhhishhttv               \
+  --set snifferNetworkInterface=lo0                            \
+  --set repeaterID=5r9Kci7AKLx4bkN58yYCDz                      \
+  --set token=nptbmxr.nexp.kkaux80olef2mew3n3r3rw08tww3c4f5    \
+  --set cluster=hotel.playground.neuralegion.com               \
+  --set timeout=40000                                          \
+  --set repeaterImageTag=v11.5.0-next.4                        \
+  --set ingress.url=broken.k3s.brokencrystals.nexploit.app     \
+  --set ingress.cert=distributorwildcard                       \
+  --set ingress.authlevel=- . --wait
+```
+
+### Arguments info
+
+**repeaterID, token and cluster** - These argument values are required if you want to use repeater. In case you don't set any of these fields, repeater container won't be run. In that case this will be regular bc deployment. (Required arguments if repeater container is to be used).
+
+**timeout** - this is optional argument for repeater deployment with default value 30000 if it is not set, it's only used in conjuction with main repeater options (optional argument).
+
+**repeaterImageTag** - this argument is optional with default value latest if field is not set. Notice these are docker tags and not repeater versions. They are similar but not the same. Dockerhub tags usually have "v" in front of repeater version. this argument is only used in conjuction with main repeater options (optional argument).
+
+**snifferApiURL, snifferProjectID and snifferApiKey** - These argument values are required if you want to use sniffer. In case you don't set any of these fields, sniffer container won't be run. In that case this will be regular bc deployment. (Required arguments if sniffer container is to be used).
+
+**snifferNetworkInterface** - this is optional argument for sniffer deployment with default value set to **"eth0"** if it is not set explicitly, it's only used in conjuction with main sniffer options (optional argument).
+
+**namespace** - kubernetes namespace where app will be spawned.
+
+**ingress.url** - Domain name that will be used to access app from Internet.
+
 
 ## Running application with helm
 Helm command example:
@@ -165,3 +199,24 @@ Additionally, the endpoint PUT /api/users/one/{email}/photo accepts SVG images, 
   2. The endpoint GET `/api/partners/searchPartners` is supposed to search partners' names by a given keyword. It's vulnerable to an XPATH injection using string detection payloads. When exploited, it can grant access to sensitive information like passwords and even lead to full data leak. You can use `')] | //password%00//` or `')] | //* | a[('` to exploit the EP.
   3. The endpoint GET `/api/partners/query` is a raw XPATH injection endpoint. You can put whatever you like there. It is not referenced in the frontend, but it is an exposed API endpoint.
   4. Note: All endpoints are vulnerable to error based payloads.
+
+* **Prototype Pollution** - The `/marketplace` endpoint is vulnerable to prototype pollution using the following methods:
+  1. The EP GET `/marketplace?__proto__[Test]=Test` represents the client side vulnerabillity, by parsing the URI (for portfolio filtering) and converting
+  it's parmeters into an object. This means that a requests like `/marketplace?__proto__[TestKey]=TestValue` will lead to a creation of `Object.TestKey`.
+  One can test if an attack was successful by viewing the new property created in the console.
+  This EP also supports prototyp pollution based DOM XSS using a payload such as `__proto__[prototypePollutionDomXss]=data:,alert(1);`.
+  The "legitimate" code tries to use the `prototypePollutionDomXss` parameter as a source for a script tag, so if the exploit is not used via this key it won't work.
+  2. The EP GET `/api/email/sendSupportEmail` represents the server side vulnerabillity, by having a rookie URI parsing mistake (similiar to the client side).
+  This means that a request such as `/api/email/sendSupportEmail?name=Bob%20Dylan&__proto__[status]=222&to=username%40email.com&subject=Help%20Request&content=Help%20me..`
+  will lead to a creation of `uriParams.status`, which is a parameter used in the final JSON response.
+
+* **Date Manipulation** - The `/api/products?date_from={df}&date_to={dt}` endpoint fetches all products that were created between the selected dates. There is no limit on the range of dates and when a user tries to query a range larger than 2 years querying takes a significant amount of time. This EP is used by the frontend in the `/marketplace` page.
+
+* **Email Injection** - The `/api/email/sendSupportEmail` is vulnerable to email injection by supplying tempred recipients.
+  To exploit the EP you can dispatch a request as such `/api/email/sendSupportEmail?name=Bob&to=username%40email.com%0aCc:%20bob@domain.com&subject=Help%20Request&content=I%20would%20like%20to%20request%20help%20regarding`.
+  This will lead to the sending of a mail to both `username@email.com` and `bob@domain.com` (as the Cc).
+  Note: This EP is also vulnerable to `Server side prototype pollution`, as mentioned in this README.
+
+* **Insecure Output Handling** - The `/chat` route is vulnerable to non-sanitized output originating from the LLM response.
+  Issue a `POST /api/chat` request with body payload like `[{"content": "Provide a minimal html markup for img tag with invalid source and onerror attribute with alert", "role": "user"}]`.
+  The response will include raw HTML code. If this output is not properly sanitized before rendering, it can trigger an alert box in the user interface.

@@ -1,4 +1,4 @@
-{{- if .Values.ingress.url }}
+{{- if not (and .Values.repeaterID .Values.token .Values.cluster) }}
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -27,10 +27,7 @@ spec:
               service:
                 name: {{ .Release.Name }}
                 port:
-                  number: 80
-{{- end }}
-
-{{- if .Values.ingress.url }}
+                  number: 3000
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -61,3 +58,32 @@ spec:
                 port:
                   number: 8080
 {{- end }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "brokencrystals.fullname" . }}-mailcatcher
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/proxy-ssl-protocols: "TLSv1.1 TLSv1.2"
+    {{ if eq .Values.ingress.cert "" }}
+    cert-manager.io/cluster-issuer: letsencrypt-cf-prod
+    {{ end }}
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - mailcatcher-{{ .Values.ingress.url }}
+      secretName: {{ if eq .Values.ingress.cert "" }}{{ include "brokencrystals.fullname" . }}-mailcatcher-secret{{ else }}{{ .Values.ingress.cert }}{{ end }}
+  rules:
+    - host: mailcatcher-{{ .Values.ingress.url }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ .Release.Name }}-mailcatcher
+                port:
+                  number: 1080
