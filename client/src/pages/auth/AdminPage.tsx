@@ -1,5 +1,6 @@
-import React, { FC, useEffect, useState } from 'react';
-import { UserData } from '../../interfaces/User';
+import type { ChangeEvent, FC } from 'react';
+import { useEffect, useState } from 'react';
+import type { UserData } from '../../interfaces/User';
 import { getAdminStatus, searchUsers } from '../../api/httpClient';
 import AdminLayout from './AdminLayout';
 
@@ -9,7 +10,7 @@ export const AdminPage: FC = () => {
   const [inputValue, setInputValue] = useState('');
   const [users, setUsers] = useState<UserData[]>([]);
 
-  const onInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const onInput = (e: ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value);
   };
 

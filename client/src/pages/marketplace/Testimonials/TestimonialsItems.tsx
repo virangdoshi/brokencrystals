@@ -1,6 +1,6 @@
-import React, { FC } from 'react';
-import InnerHTML from 'dangerously-set-html-content';
-import { Testimonial } from '../../../interfaces/Testimonial';
+import type { FC } from 'react';
+import { InnerHtml } from '../../../components';
+import type { Testimonial } from '../../../interfaces/Testimonial';
 
 interface Props {
   testimonials: Array<Testimonial>;
@@ -15,7 +15,7 @@ export const TestimonialsItems: FC<Props> = (props: Props) => {
           <p>
             <i className="bx bxs-quote-alt-left quote-icon-left" />
             <span className="dangerous-html">
-              <InnerHTML html={item.message} />
+              <InnerHtml tagName="span" html={item.message || 'N/A'} />
             </span>
             <i className="bx bxs-quote-alt-right quote-icon-right" />
           </p>
@@ -25,10 +25,10 @@ export const TestimonialsItems: FC<Props> = (props: Props) => {
             alt=""
           />
           <h3 className="dangerous-html">
-            <InnerHTML html={item.name} />
+            <InnerHtml html={item.name || 'N/A'} />
           </h3>
           <h4 className="dangerous-html">
-            <InnerHTML html={item.title} />
+            <InnerHtml html={item.title || 'N/A'} />
           </h4>
         </div>
       ))}

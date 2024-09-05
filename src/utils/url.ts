@@ -1,12 +1,15 @@
 // Taken from PortSwigger's prototype pollution labs
 // VULNERABLE TO PROTOTYPE POLLUTION!
-var splitUriIntoParamsPPVulnerable = (params, coerce=undefined) => {
+const splitUriIntoParamsPPVulnerable = (
+  params,
+  coerce = undefined
+): Record<string, unknown> => {
   if (params.charAt(0) === '?') {
     params = params.substring(1);
   }
 
-  var obj = {},
-    coerce_types = { true: !0, false: !1, null: null };
+  const obj: Record<string, unknown> = {};
+  const coerce_types = { true: !0, false: !1, null: null };
 
   if (!params) {
     return obj;
@@ -16,13 +19,14 @@ var splitUriIntoParamsPPVulnerable = (params, coerce=undefined) => {
     .replace(/\+/g, ' ')
     .split('&')
     .forEach(function (v) {
-      var param = v.split('='),
-        key = decodeURIComponent(param[0]),
-        val,
-        cur = obj,
-        i = 0,
-        keys = key.split(']['),
-        keys_last = keys.length - 1;
+      const param = v.split('=');
+      let key = decodeURIComponent(param[0]);
+      let keys = key.split('][');
+      let keys_last = keys.length - 1;
+      let val;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let cur: any = obj;
+      let i = 0;
 
       if (/\[/.test(keys[0]) && /\]$/.test(keys[keys_last])) {
         keys[keys_last] = keys[keys_last].replace(/\]$/, '');
@@ -40,25 +44,25 @@ var splitUriIntoParamsPPVulnerable = (params, coerce=undefined) => {
             val && !isNaN(val) && +val + '' === val
               ? +val // number
               : val === 'undefined'
-              ? undefined // undefined
-              : coerce_types[val] !== undefined
-              ? coerce_types[val] // true, false, null
-              : val; // string
+                ? undefined // undefined
+                : coerce_types[val] !== undefined
+                  ? coerce_types[val] // true, false, null
+                  : val; // string
         }
 
         if (keys_last) {
           for (; i <= keys_last; i++) {
-            //@ts-ignore
             key = keys[i] === '' ? cur.length : keys[i];
             cur = cur[key] =
               i < keys_last
-                ? //@ts-ignore
-                  cur[key] || (keys[i + 1] && isNaN(keys[i + 1]) ? {} : [])
+                ? cur[key] ||
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  (keys[i + 1] && isNaN(keys[i + 1] as any) ? {} : [])
                 : val;
           }
         } else {
           if (Object.prototype.toString.call(obj[key]) === '[object Array]') {
-            obj[key].push(val);
+            (obj[key] as unknown[]).push(val);
           } else if ({}.hasOwnProperty.call(obj, key)) {
             obj[key] = [obj[key], val];
           } else {

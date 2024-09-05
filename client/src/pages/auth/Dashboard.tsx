@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import type { FC } from 'react';
 import AuthLayout from './AuthLayout';
 
 export const Dashboard: FC = () => {

@@ -1,6 +1,8 @@
-import React, { FC, FormEvent, useState } from 'react';
+import type { FC, FormEvent } from 'react';
+import { useState } from 'react';
 import { postUser } from '../../../api/httpClient';
-import { RegistrationUser, LoginFormMode } from '../../../interfaces/User';
+import type { RegistrationUser } from '../../../interfaces/User';
+import { LoginFormMode } from '../../../interfaces/User';
 import AuthLayout from '../AuthLayout';
 import { Link } from 'react-router-dom';
 import showRegResponse from './showRegReponse';
@@ -73,7 +75,6 @@ export const Register: FC = () => {
             <select
               className="form-control"
               name="op"
-              placeholder="Authentication Type"
               value={authMode}
               onChange={onAuthModeChange}
             >
@@ -172,7 +173,7 @@ export const Register: FC = () => {
           {regResponse && showRegResponse(regResponse)}
 
           <button
-            className="au-btn au-btn--block au-btn--green m-b-20"
+            className="au-btn au-btn--block au-btn--green mb-4"
             type="submit"
             disabled={submitBtnDisabled}
           >

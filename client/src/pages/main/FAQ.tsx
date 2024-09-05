@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import type { FC } from 'react';
 
 export const FAQ: FC = () => {
   const FAQItems = [

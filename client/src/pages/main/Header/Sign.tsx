@@ -1,6 +1,8 @@
-import React, { ChangeEvent, FC, useEffect, useState } from 'react';
+import type { ChangeEvent, FC } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import FileType from 'file-type';
+import { Buffer } from 'buffer';
+import { fileTypeFromBuffer } from 'file-type/core';
 import { getUserPhoto, putPhoto } from '../../../api/httpClient';
 import { RoutePath } from '../../../router/RoutePath';
 
@@ -25,13 +27,18 @@ export const Sign: FC = () => {
     if (!user) return null;
 
     getUserPhoto(user).then((data) => {
-      const base64 = Buffer.from(data, 'binary').toString('base64');
-      FileType.fromBuffer(data).then((file_type) => {
-        base64 &&
+      if (!(data instanceof ArrayBuffer)) {
+        return null;
+      }
+
+      const base64 = Buffer.from(data).toString('base64');
+      if (base64) {
+        fileTypeFromBuffer(data).then((file_type) => {
           setUserImage(
             `data: ${file_type?.mime || 'image/svg+xml'}; base64, ${base64}`
           );
-      });
+        });
+      }
     });
   };
 
@@ -56,6 +63,8 @@ export const Sign: FC = () => {
             to={RoutePath.Home}
             className="get-started-btn scrollto"
             onClick={logout}
+            role="button"
+            aria-label="Log out"
           >
             Log out {userName}
           </Link>
@@ -72,10 +81,17 @@ export const Sign: FC = () => {
           <a
             href={`${RoutePath.Login}?logobgcolor=transparent`}
             className="get-started-btn scrollto"
+            role="button"
+            aria-label="Sign in"
           >
             Sign in
           </a>
-          <a href={RoutePath.LoginNew} className="get-started-btn scrollto">
+          <a
+            href={RoutePath.LoginNew}
+            className="get-started-btn scrollto"
+            role="button"
+            aria-label="2-step Sign in"
+          >
             2-step Sign in
           </a>
         </>

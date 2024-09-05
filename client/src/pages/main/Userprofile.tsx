@@ -1,12 +1,13 @@
-import React, { FormEvent, useEffect, useState } from 'react';
-import { Redirect } from 'react-router';
+import type { FormEvent } from 'react';
+import { useEffect, useState } from 'react';
+import { Navigate } from 'react-router';
 import {
   getAdminStatus,
   getUserDataById,
   putUserData,
   removeUserPhotoById
 } from '../../api/httpClient';
-import { UserData } from '../../interfaces/User';
+import type { UserData } from '../../interfaces/User';
 import { RoutePath } from '../../router/RoutePath';
 import AuthLayout from '../auth/AuthLayout';
 
@@ -94,7 +95,7 @@ export const Userprofile = () => {
                 />
               </div>
               <button
-                className="au-btn au-btn--block au-btn--green m-b-20"
+                className="au-btn au-btn--block au-btn--green mb-4"
                 type="submit"
               >
                 Save changes
@@ -102,7 +103,7 @@ export const Userprofile = () => {
             </form>
             <div>
               <button
-                className="au-btn au-btn--block au-btn--blue m-b-20"
+                className="au-btn au-btn--block au-btn--blue mb-4"
                 onClick={() => removeUserPhotoById(user.id, isAdmin)}
               >
                 Remove user profile photo
@@ -111,8 +112,9 @@ export const Userprofile = () => {
           </div>
         </AuthLayout>
       ) : (
-        <Redirect
-          to={{ pathname: RoutePath.Login, state: { from: '/userprofile' } }}
+        <Navigate
+          to={{ pathname: RoutePath.Login }}
+          state={{ from: '/userprofile' }}
         />
       )}
     </>

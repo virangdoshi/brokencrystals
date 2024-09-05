@@ -1,14 +1,11 @@
-import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
-import { Testimonial } from '../interfaces/Testimonial';
-import {
-  LoginFormMode,
-  LoginUser,
-  RegistrationUser,
-  UserData
-} from '../interfaces/User';
-import { Product } from '../interfaces/Product';
-import { OidcClient } from '../interfaces/Auth';
-import { ChatMessage } from '../interfaces/ChatMessage';
+import type { AxiosInstance, AxiosRequestConfig } from 'axios';
+import axios from 'axios';
+import type { Testimonial } from '../interfaces/Testimonial';
+import type { LoginUser, RegistrationUser, UserData } from '../interfaces/User';
+import { LoginFormMode } from '../interfaces/User';
+import type { Product } from '../interfaces/Product';
+import type { OidcClient } from '../interfaces/Auth';
+import type { ChatMessage } from '../interfaces/ChatMessage';
 import { ApiUrl } from './ApiUrl';
 import { makeApiRequest } from './makeApiRequest';
 
@@ -19,6 +16,8 @@ function formatDateToYYYYMMDD(date: Date): string {
 
   return `${dd}-${mm}-${yyyy}`;
 }
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 export const httpClient: AxiosInstance = axios.create();
 
@@ -171,7 +170,9 @@ export function getSpawnData(): Promise<any> {
   });
 }
 
-export function getUserPhoto(email: string): Promise<any> {
+export function getUserPhoto(
+  email: string
+): Promise<ArrayBuffer | { errorText: string }> {
   return makeApiRequest({
     url: `${ApiUrl.Users}/one/${email}/photo`,
     method: 'get',
@@ -214,7 +215,7 @@ export function putUserData(user: UserData): Promise<UserData> {
     method: 'put',
     headers: {
       'content-type': 'application/json',
-      'authorization':
+      authorization:
         sessionStorage.getItem('token') || localStorage.getItem('token')
     },
     data: user
@@ -230,7 +231,7 @@ export function putPhoto(photo: File, email: string): Promise<any> {
     method: 'put',
     headers: {
       'content-type': 'image/png',
-      'authorization':
+      authorization:
         sessionStorage.getItem('token') || localStorage.getItem('token')
     },
     data
@@ -254,8 +255,8 @@ export function postRender(data: string): Promise<any> {
 }
 
 function mapToUrlParams<T>(data: T): URLSearchParams {
-  return Object.entries(data).reduce((acc, [k, v]) => {
-    acc.append(k, v);
+  return Object.entries(data as any).reduce((acc, [k, v]) => {
+    acc.append(k, String(v));
     return acc;
   }, new URLSearchParams());
 }
@@ -286,7 +287,7 @@ export function viewProduct(productName: string): Promise<any> {
     url: `${ApiUrl.Products}/views`,
     method: 'get',
     headers: {
-      'authorization':
+      authorization:
         sessionStorage.getItem('token') || localStorage.getItem('token'),
       'x-product-name': productName
     }

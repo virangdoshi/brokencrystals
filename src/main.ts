@@ -7,10 +7,10 @@ import session from '@fastify/session';
 import { GlobalExceptionFilter } from './components/global-exception.filter';
 import * as os from 'os';
 import { readFileSync, readFile, readdirSync } from 'fs';
-import * as cluster from 'cluster';
+import cluster from 'cluster';
 import {
   FastifyAdapter,
-  NestFastifyApplication,
+  NestFastifyApplication
 } from '@nestjs/platform-fastify';
 import fmp from '@fastify/multipart';
 import { randomBytes } from 'crypto';
@@ -19,7 +19,7 @@ import * as https from 'https';
 import fastify from 'fastify';
 import { fastifyStatic, ListRender } from '@fastify/static';
 import { join, dirname } from 'path';
-import * as rawbody from 'raw-body';
+import rawbody from 'raw-body';
 
 const renderDirList: ListRender = (dirs, files) => {
   const currDir = dirname((dirs[0] || files[0]).href);
@@ -48,7 +48,7 @@ const renderDirList: ListRender = (dirs, files) => {
               <td>
                 -
               </td>
-            </tr>`,
+            </tr>`
         )}
         <br/>
         ${files.map(
@@ -63,7 +63,7 @@ const renderDirList: ListRender = (dirs, files) => {
               <td>
                 ${file.stats.size}
               </td>
-            </tr>`,
+            </tr>`
         )}
       </table>
       <hr>
@@ -82,13 +82,13 @@ async function bootstrap() {
       process.env.NODE_ENV === 'production'
         ? {
             cert: readFileSync(
-              '/etc/letsencrypt/live/brokencrystals.com/fullchain.pem',
+              '/etc/letsencrypt/live/brokencrystals.com/fullchain.pem'
             ),
             key: readFileSync(
-              '/etc/letsencrypt/live/brokencrystals.com/privkey.pem',
-            ),
+              '/etc/letsencrypt/live/brokencrystals.com/privkey.pem'
+            )
           }
-        : null,
+        : null
   });
 
   server.setDefaultRoute((req, res) => {
@@ -99,14 +99,14 @@ async function bootstrap() {
           success: false,
           error: {
             kind: 'user_input',
-            message: 'Not Found',
-          },
-        }),
+            message: 'Not Found'
+          }
+        })
       );
     }
 
     readFile(
-      join(__dirname, '..', 'client', 'build', 'index.html'),
+      join(__dirname, '..', 'client', 'dist', 'index.html'),
       'utf8',
       (err, data) => {
         if (err) {
@@ -117,17 +117,17 @@ async function bootstrap() {
         res.statusCode = 200;
         res.setHeader('Content-Type', 'text/html');
         res.end(data);
-      },
+      }
     );
   });
 
   await server.register(fastifyStatic, {
-    root: join(__dirname, '..', 'client', 'build'),
+    root: join(__dirname, '..', 'client', 'dist'),
     prefix: `/`,
     decorateReply: false,
     redirect: false,
     wildcard: false,
-    serveDotFiles: true,
+    serveDotFiles: true
   });
 
   for (const dir of readdirSync(join(__dirname, '..', 'client', 'vcs'))) {
@@ -139,23 +139,23 @@ async function bootstrap() {
       index: false,
       list: {
         format: 'html',
-        render: renderDirList,
+        render: renderDirList
       },
-      serveDotFiles: true,
+      serveDotFiles: true
     });
   }
 
   await server.register(fastifyStatic, {
-    root: join(__dirname, '..', 'client', 'build', 'vendor'),
+    root: join(__dirname, '..', 'client', 'dist', 'vendor'),
     prefix: `/vendor`,
     decorateReply: false,
     redirect: true,
     index: false,
     list: {
       format: 'html',
-      render: renderDirList,
+      render: renderDirList
     },
-    serveDotFiles: true,
+    serveDotFiles: true
   });
 
   const app: NestFastifyApplication = await NestFactory.create(
@@ -165,8 +165,8 @@ async function bootstrap() {
       logger:
         process.env.NODE_ENV === 'production'
           ? ['error']
-          : ['debug', 'log', 'warn', 'error'],
-    },
+          : ['debug', 'log', 'warn', 'error']
+    }
   );
 
   await server.register(fastifyCookie);
@@ -176,8 +176,8 @@ async function bootstrap() {
     cookieName: 'connect.sid',
     cookie: {
       secure: false,
-      httpOnly: false,
-    },
+      httpOnly: false
+    }
   });
   server.addContentTypeParser('*', (req) => rawbody(req.raw));
 
@@ -220,7 +220,7 @@ async function bootstrap() {
   * [Chat](#/Chat%20controller) — operations with chat
 
 
-  `,
+  `
     )
     .setVersion('1.0')
     .addServer(process.env.URL)
@@ -232,16 +232,22 @@ async function bootstrap() {
   await app.listen(3000, '0.0.0.0');
 }
 
-const CPUS = os.cpus().length;
+if (cluster.isPrimary && process.env.NODE_ENV === 'production') {
+  console.log(`Primary ${process.pid} is running`);
 
-if (cluster.isMaster && process.env.NODE_ENV === 'production') {
-  for (let i = 0; i < CPUS; i++) {
+  const numCPUs = os.cpus().length;
+  for (let i = 0; i < numCPUs; i++) {
     cluster.fork();
   }
 
-  cluster.on('exit', (worker) => {
-    console.log(`worker ${worker.process.pid} died`);
+  cluster.on('exit', (worker, code, signal) => {
+    console.log(
+      `Worker ${worker.process.pid} died with code ${code} and signal ${signal}`
+    );
+    console.log('Starting a new worker');
+    cluster.fork();
   });
 } else {
   bootstrap();
+  console.log(`Worker ${process.pid} started`);
 }

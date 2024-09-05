@@ -1,11 +1,12 @@
-import React, { FC, FormEvent, useEffect, useState } from 'react';
+import type { FC, FormEvent } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import InnerHTML from 'dangerously-set-html-content';
 import { postRender, postSubscriptions } from '../../api/httpClient';
+import { InnerHtml } from '../../components';
 
 export const Footer: FC = () => {
   const [subscriptions, setSubscriptions] = useState<string>('');
-  const [subscriptionsResponse, setSubscriptionsResponse] = useState<any>();
+  const [subscriptionsResponse, setSubscriptionsResponse] = useState<string>();
 
   const [phone, setPhone] = useState<string>('');
 
@@ -107,7 +108,7 @@ export const Footer: FC = () => {
                 <strong>Phone:</strong>{' '}
                 {phone && (
                   <span className="dangerous-html">
-                    <InnerHTML html={phone} />
+                    <InnerHtml html={phone} />
                   </span>
                 )}
                 <br />
@@ -151,7 +152,7 @@ export const Footer: FC = () => {
               </form>
               {subscriptionsResponse && (
                 <div className="dangerous-html">
-                  <InnerHTML html={subscriptionsResponse + ' subscribed.'} />
+                  <InnerHtml html={subscriptionsResponse + ' subscribed.'} />
                 </div>
               )}
             </div>
@@ -169,9 +170,11 @@ export const Footer: FC = () => {
               </strong>
               . All Rights Reserved
             </div>
-            <span className="dangerous-html">
-              <InnerHTML html={decodeURIComponent(window.location.search)} />
-            </span>
+            {window.location.search && (
+              <span className="dangerous-html">
+                <InnerHtml html={decodeURIComponent(window.location.search)} />
+              </span>
+            )}
           </div>
           <table>
             <tbody>

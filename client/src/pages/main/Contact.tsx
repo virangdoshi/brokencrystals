@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { sendSupportEmailRequest } from 'src/api/httpClient';
+import { useEffect } from 'react';
+import { sendSupportEmailRequest } from '../../api/httpClient';
 
 export const Contact = (props: { mapTitle: string | null }) => {
   useEffect(() => {
@@ -12,10 +12,14 @@ export const Contact = (props: { mapTitle: string | null }) => {
   }, []);
 
   const sendSupportRequestEmailAction = () => {
-    const formName = document.getElementById('name')?.value;
-    const formEmail = document.getElementById('email')?.value;
-    const formSubject = document.getElementById('subject')?.value;
-    const formMessage = document.getElementById('message')?.value || '';
+    const formName = (document.getElementById('name') as HTMLInputElement)
+      ?.value;
+    const formEmail = (document.getElementById('email') as HTMLInputElement)
+      ?.value;
+    const formSubject = (document.getElementById('subject') as HTMLInputElement)
+      ?.value;
+    const formMessage =
+      (document.getElementById('message') as HTMLInputElement)?.value || '';
 
     if (!(formName && formEmail && formSubject)) {
       return alert(

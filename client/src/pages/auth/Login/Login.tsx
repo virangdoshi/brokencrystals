@@ -1,8 +1,9 @@
-import { AxiosRequestConfig } from 'axios';
+import type { AxiosRequestConfig } from 'axios';
 import getBrowserFingerprint from 'get-browser-fingerprint';
-import React, { FC, FormEvent, useEffect, useState } from 'react';
+import type { FC, FormEvent } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { OidcClient } from '../../../interfaces/Auth';
+import type { OidcClient } from '../../../interfaces/Auth';
 import { RoutePath } from '../../../router/RoutePath';
 import {
   getLdap,
@@ -12,13 +13,13 @@ import {
   loadDomXsrfToken,
   getOidcClient
 } from '../../../api/httpClient';
-import {
-  LoginFormMode,
+import type {
   LoginResponse,
   LoginUser,
   UserData,
   RegistrationUser
 } from '../../../interfaces/User';
+import { LoginFormMode } from '../../../interfaces/User';
 import AuthLayout from '../AuthLayout';
 import showLdapResponse from './showLdapReponse';
 import showLoginResponse from './showLoginReponse';
@@ -34,12 +35,8 @@ enum RequestHeaders {
   APPLICATION_JSON = 'application/json'
 }
 
-interface stateType {
-  from: string;
-}
-
 export const Login: FC = () => {
-  const { state } = useLocation<stateType>();
+  const { state } = useLocation();
 
   const [form, setForm] = useState<LoginUser>(defaultLoginUser);
   const { user, password } = form;
@@ -94,21 +91,23 @@ export const Login: FC = () => {
 
   const sendLdap = () => {
     const { ldapProfileLink } = loginResponse || {};
-    ldapProfileLink &&
+    if (ldapProfileLink) {
       getLdap(ldapProfileLink)
         .then((data) => setLdapResponse(data))
         .then(() => {
           window.location.href = state ? state.from : '/';
         });
+    }
   };
 
   const appendParams = (data: LoginUser): LoginUser => {
     switch (mode) {
       case LoginFormMode.CSRF:
         return { ...data, csrf };
-      case LoginFormMode.DOM_BASED_CSRF:
+      case LoginFormMode.DOM_BASED_CSRF: {
         const fingerprint = getBrowserFingerprint();
         return { ...data, csrf, fingerprint };
+      }
       default:
         return data;
     }
@@ -147,11 +146,12 @@ export const Login: FC = () => {
       <div className="login-form">
         <form onSubmit={sendUser}>
           <div className="form-group">
-            <label>Authentication Type</label>
+            <label htmlFor="authType">Authentication Type</label>
             <select
               className="form-control"
               name="op"
-              placeholder="Authentication Type"
+              id="authType"
+              aria-label="Authentication Type"
               value={mode}
               onChange={onSelectMode}
             >
@@ -189,23 +189,27 @@ export const Login: FC = () => {
           )}
 
           <div className="form-group">
-            <label>Email</label>
+            <label htmlFor="email">Email</label>
             <input
               className="au-input au-input--full"
               type="text"
               name="user"
+              id="email"
               placeholder="Email"
+              aria-label="Email"
               value={user}
               onInput={onInput}
             />
           </div>
           <div className="form-group">
-            <label>Password</label>
+            <label htmlFor="password">Password</label>
             <input
               className="au-input au-input--full"
               type="password"
               name="password"
+              id="password"
               placeholder="Password"
+              aria-label="Password"
               value={password}
               onInput={onInput}
             />
@@ -220,8 +224,9 @@ export const Login: FC = () => {
           {ldapResponse && showLdapResponse(ldapResponse)}
 
           <button
-            className="au-btn au-btn--block au-btn--green m-b-20"
+            className="au-btn au-btn--block au-btn--green mb-4"
             type="submit"
+            aria-label="Sign in"
           >
             sign in
           </button>
@@ -237,7 +242,9 @@ export const Login: FC = () => {
         <div className="register-link">
           <p>
             Don't have an account?{' '}
-            <Link to={RoutePath.Register}>Sign Up Here</Link>
+            <Link to={RoutePath.Register} aria-label="Sign Up">
+              Sign Up Here
+            </Link>
           </p>
         </div>
       </div>

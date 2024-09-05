@@ -1,7 +1,8 @@
-import React, { useRef, useEffect, FC } from 'react';
+import type { ReactNode, FC } from 'react';
+import { useRef, useEffect } from 'react';
 
 type Props = {
-  children?: React.ReactNode;
+  children?: ReactNode;
   logoBgColor?: string;
 };
 

@@ -1,6 +1,7 @@
-import React, { FC, useEffect, useState } from 'react';
+import type { FC } from 'react';
+import { useEffect, useState } from 'react';
 import { getTestimonials, getTestimonialsCount } from '../../../api/httpClient';
-import { Testimonial } from '../../../interfaces/Testimonial';
+import type { Testimonial } from '../../../interfaces/Testimonial';
 import OwlCarousel from 'react-owl-carousel';
 import 'owl.carousel/dist/assets/owl.carousel.css';
 import 'owl.carousel/dist/assets/owl.theme.default.css';
@@ -13,7 +14,7 @@ interface Props {
 
 export const Testimonials: FC<Props> = (props: Props) => {
   const [testimonials, setTestimonials] = useState<Array<Testimonial>>([]);
-  const [newTestimonial, setNewTestimonial] = useState<any>();
+  const [newTestimonial, setNewTestimonial] = useState<Testimonial>();
   const [testimonialsCount, setTestimonialsCount] = useState<number>(0);
 
   useEffect(() => {

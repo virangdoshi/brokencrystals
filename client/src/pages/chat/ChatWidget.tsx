@@ -1,13 +1,7 @@
-import React, {
-  ChangeEvent,
-  FC,
-  KeyboardEvent,
-  useEffect,
-  useRef,
-  useState
-} from 'react';
+import type { ChangeEvent, FC, KeyboardEvent } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { queryChat } from '../../api/httpClient';
-import { ChatMessage } from '../../interfaces/ChatMessage';
+import type { ChatMessage } from '../../interfaces/ChatMessage';
 
 const UnsafeComponent: FC<{ html: string }> = ({ html }) => {
   return <div dangerouslySetInnerHTML={{ __html: html }} />;
@@ -48,7 +42,7 @@ export const ChatWidget: FC = () => {
         content: answer
       };
       setChatMessages((messages) => [...messages, serverMessage]);
-    } catch (error) {
+    } catch {
       setChatMessages((messages) => [
         ...messages,
         {

@@ -1,6 +1,5 @@
-import React from 'react';
-import InnerHTML from 'dangerously-set-html-content';
-import { LoginResponse } from '../../../interfaces/User';
+import { InnerHtml } from '../../../components';
+import type { LoginResponse } from '../../../interfaces/User';
 
 export function showLoginResponse({ email, ldapProfileLink }: LoginResponse) {
   const fields = [
@@ -14,7 +13,7 @@ export function showLoginResponse({ email, ldapProfileLink }: LoginResponse) {
         ({ title, value }) =>
           value && (
             <div className="dangerous-html" key={title}>
-              <InnerHTML html={`${title}: ${value}`} />
+              <InnerHtml html={`${title}: ${value}`} />
             </div>
           )
       )}

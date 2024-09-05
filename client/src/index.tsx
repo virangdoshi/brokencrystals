@@ -1,18 +1,25 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
-import { reportWebVitals } from './reportWebVitals';
-import { Router } from 'react-router-dom';
-import { Routes } from './router/Routes';
-import { history } from './router/history';
+import { useEffect } from 'react';
+import { createRoot } from 'react-dom/client';
+import { BrowserRouter } from 'react-router-dom';
+import { AppRoutes } from './router/AppRoutes';
+import { initDependencies } from './main';
 
-ReactDOM.render(
-  <Router history={history}>
-    <Routes />
-  </Router>,
-  document.getElementById('root')
+function AppWrapper({ onRender }: { onRender: () => void }) {
+  useEffect(() => {
+    onRender();
+  }, [onRender]);
+
+  return (
+    <BrowserRouter>
+      <AppRoutes />
+    </BrowserRouter>
+  );
+}
+
+// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+const root = createRoot(document.getElementById('root')!);
+root.render(
+  // <React.StrictMode>
+  <AppWrapper onRender={() => initDependencies()} />
+  // </React.StrictMode>
 );
-
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
-reportWebVitals(undefined);

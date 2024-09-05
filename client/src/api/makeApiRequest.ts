@@ -1,4 +1,4 @@
-import { AxiosRequestConfig } from 'axios';
+import type { AxiosRequestConfig } from 'axios';
 import { httpClient } from './httpClient';
 
 export function makeApiRequest<T>(
@@ -11,7 +11,9 @@ export function makeApiRequest<T>(
     .request(config)
     .then((response) => {
       const token = response.headers.authorization;
-      token && sessionStorage.setItem('token', token);
+      if (token) {
+        sessionStorage.setItem('token', token);
+      }
 
       return response.data;
     })
